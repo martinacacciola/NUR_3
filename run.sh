@@ -22,10 +22,10 @@ python3 satellite.py
 
 echo "Generating the PDF"
 
-pdflatex hand-in-3.tex
-bibtex hand-in-3.aux
-pdflatex hand-in-3.tex
-pdflatex hand-in-3.tex
+#pdflatex hand-in-3.tex
+#bibtex hand-in-3.aux
+#pdflatex hand-in-3.tex
+#pdflatex hand-in-3.tex
 
 
 echo "Script execution completed."
