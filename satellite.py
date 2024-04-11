@@ -232,8 +232,9 @@ for file in files:
         N_model_chi = [N(x_min, x_max, A, Nsat_avg, *best_fit_params_chi)/Nsat_avg for x_min, x_max in zip(edges[:-1], edges[1:])]
         binned_data = np.histogram(x_radii, bins=edges)[0]/Nsat_avg
 
-        row=file//2 #check
-        col=file%2  #check
+        file_index = files.index(file)
+        row = file_index // 2
+        col = file_index % 2
 
         # Plot 
   
