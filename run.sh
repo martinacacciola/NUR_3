@@ -10,11 +10,11 @@ fi
 
 # Download files from given links if they are not already present
 echo "Downloading files..."
-wget -nc https://home.strw.leidenuniv.nl/~daalen/Handin_files/satgals_m11.txt
-wget -nc https://home.strw.leidenuniv.nl/~daalen/Handin_files/satgals_m12.txt
-wget -nc https://home.strw.leidenuniv.nl/~daalen/Handin_files/satgals_m13.txt
-wget -nc https://home.strw.leidenuniv.nl/~daalen/Handin_files/satgals_m14.txt
-wget -nc https://home.strw.leidenuniv.nl/~daalen/Handin_files/satgals_m15.txt
+#wget -nc https://home.strw.leidenuniv.nl/~daalen/Handin_files/satgals_m11.txt
+#wget -nc https://home.strw.leidenuniv.nl/~daalen/Handin_files/satgals_m12.txt
+#wget -nc https://home.strw.leidenuniv.nl/~daalen/Handin_files/satgals_m13.txt
+#wget -nc https://home.strw.leidenuniv.nl/~daalen/Handin_files/satgals_m14.txt
+#wget -nc https://home.strw.leidenuniv.nl/~daalen/Handin_files/satgals_m15.txt
 
 # Run satellite.py script
 echo "Run the Satellite script ..."
