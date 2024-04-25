@@ -21,7 +21,7 @@ def bracketing(f, a, b, n):
     w = 1 / (1 + golden_ratio)
 
     # Ensure that f(b) < f(a)
-    # If necessary, swap 'a' and 'b'
+    # If necessary, swap a and b
     if f(b) > f(a):
         a, b = b, a
 
@@ -34,7 +34,7 @@ def bracketing(f, a, b, n):
             return a, b, c
         # Otherwise, use a, b and c to find a new point by fitting a parabola
         else:
-            # Compute the function values at a, b, and c
+            #Compute the function values at a, b, and c
             fa = f(a)
             fb = f(b)
             fc = f(c)
@@ -54,7 +54,7 @@ def bracketing(f, a, b, n):
                     # New bracket = [a, b, d]
                     c = d
                 # If neither condition is met, the parabola is a bad fit
-                # Set d using the golden ratio
+                #Set d using the golden ratio
                 else:
                     d = c + (c - b) * w
             # If d is not in the interval [b, c], check if it is too far away
@@ -141,6 +141,8 @@ with open("output_a.txt", "w") as f:
     # When retrieving the result, we reverse the sign back to get the correct maximum value
     f.write("Maximum N(x) = {}\n".format(-max_N))
 
+##b)
+    
 # Define the trapezoidal rule integration
 def trapezoidal_rule(f, a, b, n):
     h = (b - a) / n
@@ -174,7 +176,8 @@ def romberg(f, a, b, m=6, n=4):
     return R[0] # Return the best estimate
 
 
-# Define the function n(x) without the constants and already including x^2 
+# Define the function n(x) without the constants and already including x^2
+# Including this helps to avoid numerical issues when integrating
 def n(x, a, b, c):
     return x**(a-1) * b**(3-a) * np.exp(-(x/b)**c)
 
@@ -184,11 +187,13 @@ def compute_A(a, b, c):
         return 4 * np.pi * n(x, a, b, c) 
     return 1 / romberg(integrand, 0, 5) 
 
+# Compute the average number of satellites per halo
 def calculate_Nsat(filename):
     radius, nhalo = readfile(filename)
     Nsat_avg = len(radius) / nhalo
     return Nsat_avg
 
+# Define the model N(x) for the number of satellites
 def N_model(edges, Nsat, a, b, c):
     N = []
     A = compute_A(a, b, c)
@@ -197,11 +202,12 @@ def N_model(edges, Nsat, a, b, c):
         N.append(integral)
     return np.array(N)
 
-def chi_square(data, edges, Nsat, params):
+# Define the chi-squared function
+def chi_squared(data, edges, Nsat, params):
     a, b, c = params
     model = N_model(edges, Nsat, a, b, c)
-    chi2 = np.sum((data - model)**2 / model) 
-    return chi2
+    chi = np.sum((data - model)**2 / model) 
+    return chi
 
 # Analytical derivatives wrt a, b, c
 def derivative_a(edges,a,b,c, Nsat,A):
@@ -226,8 +232,8 @@ def derivative_c(edges,a,b,c, Nsat,A):
     return np.array(d_c)
     
 
-# Define the gradient of your chi-square function with respect to parameters - check with wolfram 
-def chi_square_gradient(a, b, c , edges, N_data, Nsat):
+# Define the gradient of your chi-square function with respect to parameters 
+def chi_squared_gradient(a, b, c , edges, N_data, Nsat):
     A = compute_A(a, b, c) 
     # Multiplying factor 
     fac = N_data**2 / N_model(edges, Nsat, a, b, c)**2 -1
@@ -240,6 +246,9 @@ def chi_square_gradient(a, b, c , edges, N_data, Nsat):
     
     return grad_a, grad_b, grad_c
 
+# Now we adapt the algorithms implemented in part a) to do line minimization in the conjugate gradient method
+# We have to minimize the funcion f(xi + lambda * ni) where xi is the current point, ni is the direction, and lambda is the step size
+#Our goal is to find the best step size lambda that minimizes the function
 
 # Bracketing algorithm to find the initial bracket for the step size (the first argument of update)
 def bracketing_for_step(f, args, a, b, n):
@@ -254,6 +263,7 @@ def bracketing_for_step(f, args, a, b, n):
     a, b, c: The bracketing points for the step size
 
     The argument in which we are interested is the step size, so we will treat the args explicitly as a tuple
+    to be able to swap when necessary the step variable
     '''
     golden_ratio = (np.sqrt(5) + 1) / 2
     w = 1 / (1 + golden_ratio)
@@ -273,7 +283,7 @@ def bracketing_for_step(f, args, a, b, n):
             return a, b, c
         # Otherwise, use a, b and c to find a new point by fitting a parabola
         else:
-            # Compute the function values at a, b, and c
+            #Compute the function values at a, b, and c
             fa = f(N_data, edges, Nsat, update(a, params, direction))
             fb = f(N_data, edges, Nsat, update(b, params, direction))
             fc = f(N_data, edges, Nsat, update(c, params, direction))
@@ -293,7 +303,7 @@ def bracketing_for_step(f, args, a, b, n):
                     # New bracket = [a, b, d]
                     c = d
                 # If neither condition is met, the parabola is a bad fit
-                # Set d using the golden ratio
+                #Set d using the golden ratio
                 else:
                     d = c + (c - b) * w
             # If d is not in the interval [b, c], check if it is too far away
@@ -309,24 +319,19 @@ def bracketing_for_step(f, args, a, b, n):
     # Final bracket
     return a, b, c
 
-## b)
 
-def readfile(filename):
-    f = open(filename, 'r')
-    data = f.readlines()[3:] #Skip first 3 lines 
-    nhalo = int(data[0]) #number of halos
-    radius = []
-    
-    for line in data[1:]:
-        if line[:-1]!='#':
-            radius.append(float(line.split()[0]))
-    radius = np.array(radius, dtype=float)    
-    f.close()
-    return radius, nhalo #Return the virial radius for all the satellites in the file, and the number of halos 
-
-files = ['satgals_m11.txt', 'satgals_m12.txt', 'satgals_m13.txt','satgals_m14.txt','satgals_m15.txt'] 
-
+# Define the golden search algorithm to find the best step size
 def golden_search_for_step(f, args, a, b, tol=1e-7):
+    '''
+    Inputs:
+    f: Objective function
+    args: Arguments of the objective function
+    a, b: Starting and ending point of the bracket
+    tol: Tolerance for the convergence
+
+    Returns:
+    The minimum of the function f within the specified interval [a, b]
+    '''
     # Unpack the arguments
     N_data, edges, Nsat, params, direction = args
     
@@ -343,7 +348,6 @@ def golden_search_for_step(f, args, a, b, tol=1e-7):
         
         if ab_larger:
             # x is the other edge of the larger interval
-            # Set it accodingly to the boolean
             x = a
         else:
             # If the condition is not true, we have [b,c] as the larger bracket
@@ -376,7 +380,7 @@ def golden_search_for_step(f, args, a, b, tol=1e-7):
                 return b
             
     # If the loop ends without returning, return b (the central value of the bracket) 
-    # In this case we don't need the function value at b
+    #In this case we don't need the function value at b
     return b
 
     
@@ -405,7 +409,10 @@ def conjugate_gradient(a,b,c, edges, N_data, Nsat, max_iter, f, g, tol=1e-6):
         # Calculate the value and gradient at the current parameters
         f_value = f(N_data, edges, Nsat, params) 
         gradient_new = - np.array(g(*params, edges, N_data, Nsat))
-        norm = np.linalg.norm(gradient_new)
+        norm = [(np.sum(gradient_new**2))**0.5]
+        # Check for convergence on the norm of the gradient by comparing to the target accuracy
+        if norm[0] < tol:
+            return params, f_value
 
         # If there is no previous gradient, set weight to 0
         if iter_count == 0:
@@ -420,16 +427,17 @@ def conjugate_gradient(a,b,c, edges, N_data, Nsat, max_iter, f, g, tol=1e-6):
             weight = np.dot((gradient_new - gradient), gradient_new)/np.dot(gradient, gradient)
             direction_new = gradient_new + weight * direction
 
-        # Golden search to find the best step size
+        # Apply line minimization over f to get minimum lambda
         best_step = golden_search_for_step(f, [N_data, edges, Nsat, params, direction_new], l_start, l_end) 
         # Update parameters accordingly
-        params += best_step * direction_new
+        params = update(best_step, params, direction_new)
         # Evaluate the new function value
         f_value_new = f(N_data, edges, Nsat, params)
         
-        # Convergence determined from comparison with the target accuracy (tol)
-        converge = np.abs(f_value_new - f_value) / np.abs(0.5*(f_value_new+f_value))
-        if converge < tol:
+        # Check for convergence by comparison with the target accuracy
+        convergence = np.abs(f_value_new - f_value) / np.abs(0.5*(f_value_new+f_value))
+        if convergence < tol:
+            # Check for convergence by comparison with the target accuracy
             return params, f_value_new
         else:
             # Go back to first step
@@ -438,43 +446,68 @@ def conjugate_gradient(a,b,c, edges, N_data, Nsat, max_iter, f, g, tol=1e-6):
 
     return params, f_value_new
 
-   
+
 xmin, xmax = 1e-4, 5. 
 n_bins = 20
 edges = np.exp(np.linspace(np.log(xmin), np.log(xmax), n_bins+1))
 
-# Initial parameters set to be the ones provided in part a
+# Parameters
 a_initial = 2.4
 b_initial = 0.25
 c_initial = 1.6
 
-best_params_chi_list = []
+def readfile(filename):
+    f = open(filename, 'r')
+    data = f.readlines()[3:] #Skip first 3 lines 
+    nhalo = int(data[0]) #number of halos
+    radius = []
+    
+    for line in data[1:]:
+        if line[:-1]!='#':
+            radius.append(float(line.split()[0]))
+    radius = np.array(radius, dtype=float)   
+    f.close()
+    return radius, nhalo #Return the virial radius for all the satellites in the file, and the number of halos, and the mean number of satellites
+
+
+files = ['satgals_m11.txt', 'satgals_m12.txt', 'satgals_m13.txt','satgals_m14.txt','satgals_m15.txt'] 
+
+
+results_dict = {}
 
 fig1b, ax = plt.subplots(3,2,figsize=(6.4,8.0))
-for i in range(5):
-    Nsat = calculate_Nsat(files[i])
-    #A_best = compute_A(*best_fit_params_chi)
-    x_radii, nhalo = readfile(files[i])
-    Ntilda = N_model(edges, Nsat, *best_fit_params_chi)  
+for idx, filename in enumerate(files):
+    x_radii, nhalo = readfile(filename)
+    Nsat = calculate_Nsat(filename)
     binned_data=np.histogram(x_radii,bins=edges)[0]/nhalo
     # Perform conjugate gradient descent
-    grad_a, grad_b, grad_c = chi_square_gradient(a_initial, b_initial, c_initial,edges, binned_data, Nsat)
-    best_fit_params_chi, min_chi_square = conjugate_gradient(a_initial, b_initial, c_initial, edges, binned_data, Nsat, max_iter=20, f=chi_square, g=chi_square_gradient, tol=1e-6)
-    best_params_chi_list.append(best_fit_params_chi)
+    grad_a, grad_b, grad_c = chi_squared_gradient(a_initial, b_initial, c_initial,edges, binned_data, Nsat)
+    best_fit_params_chi, min_chi_square = conjugate_gradient(a_initial, b_initial, c_initial, edges, binned_data, Nsat, max_iter=20, f=chi_squared, g=chi_squared_gradient, tol=1e-6)
 
-    with open("output_b.txt", "w") as f:
-        for i in range(len(files)):
-            f.write("For {}: \n".format(files[i]))
-            f.write("Nsat avg: {}\n".format(Nsat))
-            f.write("Best-fit parameters (a, b, c): {}\n".format(best_fit_params_chi))
-            f.write("Minimum chi^2: {}\n".format(min_chi_square))
-            f.write("\n")
+    Ntilda = N_model(edges, Nsat, *best_fit_params_chi)  
 
-    row=i//2
-    col=i%2
+    # Store results in dictionary
+    results_dict[filename] = {
+        "Nsat_avg": Nsat,
+        "Best_fit_params": best_fit_params_chi,
+        "Minimum_loglikelihood": min_chi_square
+    }
+
+    row = idx // 2
+    col = idx % 2
     ax[row,col].step(edges[:-1], binned_data, where='post', label='binned data')
     ax[row,col].step(edges[:-1], Ntilda, where='post', label='best-fit profile')
-    ax[row,col].set(yscale='log', xscale='log', xlabel='x', ylabel='N', title=f"$M_h \\approx 10^{{{11+i}}} M_{{\\odot}}/h$")
+    ax[row,col].set(yscale='log', xscale='log', xlabel='x', ylabel='N', title=f"$M_h \\approx 10^{{{11+idx}}} M_{{\\odot}}/h$")
+
+# Write results to file
+with open("output_b.txt", "w") as f:
+    for filename, results in results_dict.items():
+        f.write("For {}: \n".format(filename))
+        f.write("Nsat avg: {}\n".format(results["Nsat_avg"]))
+        f.write("Best-fit parameters (a, b, c): {}\n".format(results["Best_fit_params"]))
+        f.write("Minimum of the loglikelihood: {}\n".format(results["Minimum_loglikelihood"]))
+        f.write("\n")
+
 ax[2,1].set_visible(False)
 plt.tight_layout()
 handles,labels=ax[2,0].get_legend_handles_labels()
@@ -510,37 +543,117 @@ def likelihood_gradient(a, b, c, edges, N_data, Nsat):
    
     return grad_a, grad_b, grad_c
 
-best_params_like_list = []
 
-fig1b, ax = plt.subplots(3,2,figsize=(6.4,8.0))
-for i in range(5):
-    Nsat = calculate_Nsat(files[i])
-    x_radii, nhalo = readfile(files[i])
-    Ntilda = N_model(edges, Nsat, *best_fit_params_like) 
-    binned_data=np.histogram(x_radii,bins=edges)[0]/nhalo
+fig1c, ax = plt.subplots(3, 2, figsize=(6.4, 8.0))
+for idx, filename in enumerate(files):
+    Nsat = calculate_Nsat(filename)
+    x_radii, nhalo = readfile(filename)
+    binned_data = np.histogram(x_radii, bins=edges)[0] / nhalo
 
     # Perform conjugate gradient descent
     initial_guess = np.array([a_initial, b_initial, c_initial])
     best_fit_params_like, min_log = conjugate_gradient(*initial_guess, edges, binned_data, Nsat, max_iter=5, f=neg_log_likelihood, g=likelihood_gradient, tol=1e-6)
-    best_params_like_list.append(best_fit_params_like)
     
-    with open("output_b.txt", "w") as f:
-        for i in range(len(files)):
-            f.write("For {}: \n".format(files[i]))
-            f.write("Nsat avg: {}\n".format(Nsat))
-            f.write("Best-fit parameters (a, b, c): {}\n".format(best_fit_params_like))
-            f.write("Minimum of the loglikelihood: {}\n".format(min_log))
-            f.write("\n")
+    Ntilda = N_model(edges, Nsat, *best_fit_params_like) 
+    
+    # Write results to file
+    with open("output_c.txt", "w") as f:
+        f.write("For {}: \n".format(filename))
+        f.write("Best-fit parameters (a, b, c): {}\n".format(best_fit_params_like))
+        f.write("Minimum of the loglikelihood: {}\n".format(min_log))
+        f.write("\n")
 
-    row=i//2
-    col=i%2
-    ax[row,col].step(edges[:-1], binned_data, where='post', label='binned data')
-    ax[row,col].step(edges[:-1], Ntilda, where='post', label='best-fit profile')
-    ax[row,col].set(yscale='log', xscale='log', xlabel='x', ylabel='N', title=f"$M_h \\approx 10^{{{11+i}}} M_{{\\odot}}/h$")
-ax[2,1].set_visible(False)
+    row = idx // 2
+    col = idx % 2
+    ax[row, col].step(edges[:-1], binned_data, where='post', label='binned data')
+    ax[row, col].step(edges[:-1], Ntilda, where='post', label='best-fit profile')
+    ax[row, col].set(yscale='log', xscale='log', xlabel='x', ylabel='N', title=f"$M_h \\approx 10^{{{11+idx}}} M_{{\\odot}}/h$")
+
+ax[2, 1].set_visible(False)
 plt.tight_layout()
-handles,labels=ax[2,0].get_legend_handles_labels()
-plt.figlegend(handles, labels, loc=(0.65,0.15))
-plt.savefig('my_solution_1c.png', dpi=600)
+handles, labels = ax[2, 0].get_legend_handles_labels()
+plt.figlegend(handles, labels, loc=(0.65, 0.15))
+plt.savefig('./plots/my_solution_1c.png', dpi=600)
+
+## d)
+from scipy.special import gammainc, gamma
+
+# Define the G-test
+# O_i are the observations in each bin (integer values)
+# E_i are the expected values in each bin (coming from the model)
+def g_test(O_i, E_i):
+    # Add a pseudocount to handle zero counts
+    O_i += 1
+    E_i += 1
+    G = 2 * np.sum(O_i * np.log(O_i / E_i))
+    return G
+
+# Define the CDF of the chi-square distribution
+def chi_square_cdf(x, k):
+    return gammainc(k / 2, x / 2)/gamma(k/2)
+
+# This function scales the model's predictions to match the total number of observed events
+def N_scaled(edges, Nsat, a, b, c, observed_counts):
+    N = []
+    A = compute_A(a, b, c)
+    for i in range(len(edges) - 1):
+        integral = 4 * np.pi * A * Nsat * romberg(lambda x: n(x, a, b, c), edges[i], edges[i+1]) 
+        N.append(integral)
+    N = np.array(N)
+    
+    # Total number of events predicted by the model
+    total_predicted = np.sum(N)
+    
+    # Total number of observed events
+    total_observed = np.sum(observed_counts)
+    
+    # Scale the model's predictions to match the total number of observed events
+    N_scaled = N * (total_observed / total_predicted)
+    
+    return N_scaled
+
+for idx, filename in enumerate(files):
+    Nsat = calculate_Nsat(filename)
+    x_radii, nhalo = readfile(filename)
+
+    # Get the observed data as the counts falling in each bin
+    N_data = np.histogram(x_radii, bins=edges)[0] 
+
+    best_fit_params_chi = results_dict[filename]["Best_fit_params"]
+    best_fit_params_like = results_dict[filename]["Best_fit_params"]
+
+    Ntilda_chi = N_scaled(edges, Nsat, *best_fit_params_chi, N_data)
+    Ntilda_like = N_scaled(edges, Nsat, *best_fit_params_like, N_data)
+
+    # Calculate the G-test for the chi-squared method
+    G_chi = g_test(binned_data, Ntilda_chi)
+    # Calculate the G-test for the Poisson log-likelihood method
+    G_like = g_test(binned_data, Ntilda_like)
+
+    # Calculate the degrees of freedom 
+    # It is the same for both methods since we have the same number of parameters
+    k = len(N_data) - len(best_fit_params_chi)
+
+    # Calculate the p-value for the chi-squared method
+    p_chi = 1 - chi_square_cdf(G_chi, k)
+    # Calculate the p-value for the Poisson log-likelihood method
+    p_like = 1 - chi_square_cdf(G_like, k)
+
+    G_chi_reduced = G_chi / k
+    G_likelihood_reduced = G_like / k
+
+    with open("output_d.txt", "w") as f:
+        f.write("For {}: \n".format(filename))
+        f.write("G-test for chi-squared method: {}\n".format(G_chi))
+        f.write("Reduced G-test for chi-squared method: {}\n".format(G_chi_reduced))
+        f.write("p-value for chi-squared method: {}\n".format(p_chi))
+        f.write("G-test for Poisson log-likelihood method: {}\n".format(G_like))
+        f.write("p-value for Poisson log-likelihood method: {}\n".format(p_like))
+        f.write("\n")
+
+
+
+
+
 
 
