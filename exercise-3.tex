@@ -1,0 +1,26 @@
+\section{Satellite galaxies around a massive central - part 2}
+The exercise is done in the script satellite2.py. The necessary explanations of the methods used are in the comments of the code. 
+For question (a), we do the following: \lstinputlisting[firstline=6,lastline=138]{satellite2.py} 
+The results of the maximization are in: \lstinputlisting{output_a.txt}
+For question (b), we have set for all files a number of 20 radial bins. We decided not to follow any rule of thumbs, because they usually imply the sample size. 
+In our case, the dataset is very large and will end up producing too many bins, which tend to give a "noisy" plot, where the pattern is difficult to be interpreted.
+To guarantee readability, the bin number has been determined by visual inspection: we experimented with different bin numbers (up to 100), to end up choosing a small one
+that gives a clear representation of the data, suitable for all files. We opt for a logarithmic scale, which helps visualizing a distribution which spans over some orders 
+of magnitude. The range we have looking at is $[10^{-4}, 5]$, chosen after inspecting the minimum ($\sim 10^{-4}$) and maximum radii ($\sim 2.5$) values, from the observations.
+The code for this part is the following: \lstinputlisting[firstline=144,lastline=508]{satellite2.py} 
+We report $\langle N_\text{sat} \rangle$, the best-fit parameters $a$, $b$ and $c$ and the minimum value for $\chi^2$ found using the implemented minimization routine, which follows:
+\[ \frac{\partial \chi^2}{\partial p_k} = -2 \sum_{i=0}^{N-1} \frac{y_i - y(x_i; p)}{\sigma_i^2} \frac{\partial y(x_i; p)}{\partial p_k} \]
+where $y_i$ are the observations, $y(x_i; p)$ is the model depending on the parameters $p$ (in our case $a$, $b$, $c$) and $\sigma$ is the standard deviation. The sum is done 
+over all the bins ($N$ is the number of data points).
+The results are in:
+\lstinputlisting{output_b.txt}
+For question (c), we use the unbiased approach, with the Poisson log-likelihood:
+\[ -\ln \mathcal{L}(\mathbf{p}) = -\sum_{i=0}^{N-1} \left( y_i \ln[\mu(x_i; \mathbf{p})] - \mu(x_i; \mathbf{p}) - \ln(y_i!) \right) \]
+where $\mu = \tilde{N_\text{i}$, i.e. the model counts and $y_i = N_i$ the mean observed counts in each bin.
+
+
+
+
+
+
+%we have followed again the conjugate gradient descent me
