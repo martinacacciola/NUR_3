@@ -71,7 +71,7 @@ def bracketing(f, a, b, n):
     return a, b, c
 
 
-def golden_search(f, a, b, tol=1e-7):
+def golden_search(f, a, b, tol=1e-5):
     
     golden_ratio = (1+np.sqrt(5)) / 2
     w = 1/ (1+golden_ratio)
@@ -153,7 +153,7 @@ def trapezoidal_rule(f, a, b, n):
     return result
 
 # Romberg integration
-def romberg(f, a, b, m=6, n=4):
+def romberg(f, a, b, m=8, n=4):
     '''
     Inputs:
     f: Function to integrate
@@ -321,7 +321,7 @@ def bracketing_for_step(f, args, a, b, n):
 
 
 # Define the golden search algorithm to find the best step size
-def golden_search_for_step(f, args, a, b, tol=1e-7):
+def golden_search_for_step(f, args, a, b, tol=1e-4):
     '''
     Inputs:
     f: Objective function
@@ -380,7 +380,7 @@ def golden_search_for_step(f, args, a, b, tol=1e-7):
                 return b
             
     # If the loop ends without returning, return b (the central value of the bracket) 
-    #In this case we don't need the function value at b
+    # In this case we don't need the function value at b
     return b
 
     
@@ -389,7 +389,7 @@ def update(step, params, direction):
     return params + step * direction
 
 # Define the conjugate gradient descent method
-def conjugate_gradient(a,b,c, edges, N_data, Nsat, max_iter, f, g, tol=1e-6):
+def conjugate_gradient(a,b,c, edges, N_data, Nsat, max_iter, f, g, tol=1e-4):
     '''
     Inputs:
     a, b, c: Initial parameters
@@ -473,7 +473,7 @@ def readfile(filename):
 files = ['satgals_m11.txt', 'satgals_m12.txt', 'satgals_m13.txt','satgals_m14.txt','satgals_m15.txt'] 
 
 
-results_dict = {}
+results_dict_chi = {}
 
 fig1b, ax = plt.subplots(3,2,figsize=(6.4,8.0))
 for idx, filename in enumerate(files):
@@ -487,10 +487,10 @@ for idx, filename in enumerate(files):
     Ntilda = N_model(edges, Nsat, *best_fit_params_chi)  
 
     # Store results in dictionary
-    results_dict[filename] = {
+    results_dict_chi[filename] = {
         "Nsat_avg": Nsat,
-        "Best_fit_params": best_fit_params_chi,
-        "Minimum_loglikelihood": min_chi_square
+        "Best_fit_params_chi": best_fit_params_chi,
+        "Minimum_chi": min_chi_square
     }
 
     row = idx // 2
@@ -501,11 +501,11 @@ for idx, filename in enumerate(files):
 
 # Write results to file
 with open("output_b.txt", "w") as f:
-    for filename, results in results_dict.items():
+    for filename, results in results_dict_chi.items():
         f.write("For {}: \n".format(filename))
         f.write("Nsat avg: {}\n".format(results["Nsat_avg"]))
-        f.write("Best-fit parameters (a, b, c): {}\n".format(results["Best_fit_params"]))
-        f.write("Minimum of the loglikelihood: {}\n".format(results["Minimum_loglikelihood"]))
+        f.write("Best-fit parameters (a, b, c): {}\n".format(results["Best_fit_params_chi"]))
+        f.write("Minimum of the chi squared: {}\n".format(results["Minimum_chi"]))
         f.write("\n")
 
 ax[2,1].set_visible(False)
@@ -543,6 +543,7 @@ def likelihood_gradient(a, b, c, edges, N_data, Nsat):
    
     return grad_a, grad_b, grad_c
 
+results_dict_like = {}
 
 fig1c, ax = plt.subplots(3, 2, figsize=(6.4, 8.0))
 for idx, filename in enumerate(files):
@@ -555,25 +556,33 @@ for idx, filename in enumerate(files):
     best_fit_params_like, min_log = conjugate_gradient(*initial_guess, edges, binned_data, Nsat, max_iter=5, f=neg_log_likelihood, g=likelihood_gradient, tol=1e-6)
     
     Ntilda = N_model(edges, Nsat, *best_fit_params_like) 
-    
-    # Write results to file
-    with open("output_c.txt", "w") as f:
-        f.write("For {}: \n".format(filename))
-        f.write("Best-fit parameters (a, b, c): {}\n".format(best_fit_params_like))
-        f.write("Minimum of the loglikelihood: {}\n".format(min_log))
-        f.write("\n")
 
+    # Store results in dictionary
+    results_dict_like[filename] = {
+        "Best_fit_params_like": best_fit_params_like,
+        "Minimum_like": min_log
+    }
+    
     row = idx // 2
     col = idx % 2
     ax[row, col].step(edges[:-1], binned_data, where='post', label='binned data')
     ax[row, col].step(edges[:-1], Ntilda, where='post', label='best-fit profile')
     ax[row, col].set(yscale='log', xscale='log', xlabel='x', ylabel='N', title=f"$M_h \\approx 10^{{{11+idx}}} M_{{\\odot}}/h$")
 
+# Write results to file
+with open("output_c.txt", "w") as f:
+    for filename, results in results_dict_like.items():
+        f.write("For {}: \n".format(filename))
+        f.write("Best-fit parameters (a, b, c): {}\n".format(results["Best_fit_params_like"]))
+        f.write("Minimum of the loglikelihood: {}\n".format(results["Minimum_like"]))
+        f.write("\n")
+
 ax[2, 1].set_visible(False)
 plt.tight_layout()
 handles, labels = ax[2, 0].get_legend_handles_labels()
 plt.figlegend(handles, labels, loc=(0.65, 0.15))
 plt.savefig('./plots/my_solution_1c.png', dpi=600)
+
 
 ## d)
 from scipy.special import gammainc, gamma
@@ -582,13 +591,13 @@ from scipy.special import gammainc, gamma
 # O_i are the observations in each bin (integer values)
 # E_i are the expected values in each bin (coming from the model)
 def g_test(O_i, E_i):
-    # Add a pseudocount to handle zero counts
-    O_i += 1
-    E_i += 1
-    G = 2 * np.sum(O_i * np.log(O_i / E_i))
+    if O_i == 0 or E_i == 0:
+        G = 0
+    else:
+        G = 2 * np.sum(O_i * np.log(O_i / E_i))
     return G
 
-# Define the CDF of the chi-square distribution
+#Define the CDF of the chi-squared distribution
 def chi_square_cdf(x, k):
     return gammainc(k / 2, x / 2)/gamma(k/2)
 
@@ -612,6 +621,9 @@ def N_scaled(edges, Nsat, a, b, c, observed_counts):
     
     return N_scaled
 
+# Initialize an empty dictionary to store results
+results = {}
+
 for idx, filename in enumerate(files):
     Nsat = calculate_Nsat(filename)
     x_radii, nhalo = readfile(filename)
@@ -619,37 +631,57 @@ for idx, filename in enumerate(files):
     # Get the observed data as the counts falling in each bin
     N_data = np.histogram(x_radii, bins=edges)[0] 
 
-    best_fit_params_chi = results_dict[filename]["Best_fit_params"]
-    best_fit_params_like = results_dict[filename]["Best_fit_params"]
+    best_fit_params_chi = results_dict_chi[filename]["Best_fit_params_chi"]
+    best_fit_params_like = results_dict_like[filename]["Best_fit_params_like"]
 
     Ntilda_chi = N_scaled(edges, Nsat, *best_fit_params_chi, N_data)
     Ntilda_like = N_scaled(edges, Nsat, *best_fit_params_like, N_data)
 
-    # Calculate the G-test for the chi-squared method
-    G_chi = g_test(binned_data, Ntilda_chi)
-    # Calculate the G-test for the Poisson log-likelihood method
-    G_like = g_test(binned_data, Ntilda_like)
+    # Initialize G-test statistics for chi-squared method and likelihood method
+    G_chi = 0
+    G_likelihood = 0
 
-    # Calculate the degrees of freedom 
-    # It is the same for both methods since we have the same number of parameters
-    k = len(N_data) - len(best_fit_params_chi)
+    # Iterate over each bin
+    for i in range(len(N_data)):
+        # Calculate G-test statistic for each bin
+        G_chi += g_test(N_data[i], Ntilda_chi[i])
+        G_likelihood += g_test(N_data[i], Ntilda_like[i])
+
+    # Calculate the degrees of freedom (same for both methods)
+    # N = number of data points, 3 = number of parameters
+    k = np.sum(N_data) - 3
 
     # Calculate the p-value for the chi-squared method
     p_chi = 1 - chi_square_cdf(G_chi, k)
     # Calculate the p-value for the Poisson log-likelihood method
-    p_like = 1 - chi_square_cdf(G_like, k)
+    p_like = 1 - chi_square_cdf(G_likelihood, k)
 
+    # Calculate the reduced G-test value
     G_chi_reduced = G_chi / k
-    G_likelihood_reduced = G_like / k
+    G_likelihood_reduced = G_likelihood / k
 
-    with open("output_d.txt", "w") as f:
+    # Store results in the dictionary
+    results[filename] = {
+        "G-test_chi": G_chi,
+        "Reduced_G-test_chi": G_chi_reduced,
+        "p-value_chi": p_chi,
+        "G-test_like": G_likelihood,
+        "Reduced_G-test_like": G_likelihood_reduced,
+        "p-value_like": p_like
+    }
+
+# Write results to file
+with open("output_d.txt", "w") as f:
+    for filename, result in results.items():
         f.write("For {}: \n".format(filename))
-        f.write("G-test for chi-squared method: {}\n".format(G_chi))
-        f.write("Reduced G-test for chi-squared method: {}\n".format(G_chi_reduced))
-        f.write("p-value for chi-squared method: {}\n".format(p_chi))
-        f.write("G-test for Poisson log-likelihood method: {}\n".format(G_like))
-        f.write("p-value for Poisson log-likelihood method: {}\n".format(p_like))
+        f.write("G-test for chi-squared method: {}\n".format(result["G-test_chi"]))
+        f.write("Reduced G-test for chi-squared method: {}\n".format(result["Reduced_G-test_chi"]))
+        f.write("p-value for chi-squared method: {}\n".format(result["p-value_chi"]))
+        f.write("G-test for Poisson log-likelihood method: {}\n".format(result["G-test_like"]))
+        f.write("Reduced G-test for Poisson log-likelihood method: {}\n".format(result["Reduced_G-test_like"]))
+        f.write("p-value for Poisson log-likelihood method: {}\n".format(result["p-value_like"]))
         f.write("\n")
+
 
 
 

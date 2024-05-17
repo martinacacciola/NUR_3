@@ -18,9 +18,9 @@ wget -nc https://home.strw.leidenuniv.nl/~daalen/Handin_files/satgals_m15.txt
 
 # Run satellite.py script
 echo "Run the Satellite script ..."
-python3 satellite.py
+python3 satellite2.py
 
-echo "Generating the PDF"
+#echo "Generating the PDF"
 
 pdflatex hand-in-3.tex
 bibtex hand-in-3.aux
