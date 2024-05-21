@@ -1,0 +1,54 @@
+\section{Simulating the solar system}
+The exercise is done in the script solar_ss.py. The necessary explanations of the methods used are in the comments of the code. 
+For question (a), we do the following: \lstinputlisting[firstline=1,lastline=47]{solar_ss.py} 
+The resulting plot is in Fig. \ref{fig:fig1a}.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.9\linewidth]{./plots/fig1a.png}
+    \caption{Plot showing the initial conditions generated for the Solar System, in UA units. Left panel: $(x,y)$ positions at the current time. Right panel: $(x,z)$ positions at the current time.}
+    \label{fig:fig1a}
+  \end{figure}
+
+For question (b), 
+we do the following: \lstinputlisting[firstline=49,lastline=150]{solar_ss.py}
+The resulting plot is in Fig. \ref{fig:fig1b}, while a zoom on the inner planets is found at Fig. \ref{fig:fig1bzoom}.
+% aggiungi: Explain whether leapfrog is a suitable choice of an algorithm, and why.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.9\linewidth]{./plots/fig1b.png}
+    \caption{Plot showing the orbits of the planets in the Solar System, using Leapfrog method.
+    The positions of the objects are computed over a time of 200 years and are expressed in UA units. Right panel: $(x,y)$ positions over time. Left panel: $(z)$ coordinate over time.} 
+    \label{fig:fig1b}
+  \end{figure}
+
+  \begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.9\linewidth]{./plots/fig1b_zoom.png}
+    \caption{Zoom showing the orbits of the inner planets in the Solar System, using Leapfrog method.
+    The positions of the objects are computed over a time of 200 years and are expressed in UA units. Right panel: $(x,y)$ positions over time. Left panel: $(z)$ coordinate over time.} 
+    \label{fig:fig1bzoom}
+  \end{figure}
+
+For question (c), 
+we do the following: \lstinputlisting[firstline=152,lastline=233]{solar_ss.py}
+%aggiungi: compare the results you get to those obtained with the leapfrog method
+The resulting plot is in Fig. \ref{fig:fig1c}. The difference in the $x$ coordinates computed by the two methods is found at Fig. \ref{fig:fig1cdiff}.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.9\linewidth]{./plots/fig1c.png}
+    \caption{Plot showing the orbits of the planets in the Solar System, using Runge-Kutta method.
+    The positions of the objects are computed over a time of 200 years and are expressed in UA units. Right panel: $(x,y)$ positions over time. Left panel: $(z)$ coordinate over time.} 
+    \label{fig:fig1b}
+  \end{figure}
+
+  \begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.9\linewidth]{./plots/fig1c_diff.png}
+    \caption{Difference $(z)$ coordinate over time (100 years in this case, for clearer visualization) between the Leapfrog and Runge-Kutta methods.} 
+    \label{fig:fig1bzoom}
+  \end{figure}
+
+\section{Calculating forces with the FFT}
