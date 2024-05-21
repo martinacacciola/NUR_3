@@ -1,5 +1,5 @@
 \section{Simulating the solar system}
-The exercise is done in the script solar_ss.py. The necessary explanations of the methods used are in the comments of the code. 
+The exercise is done in the script solar$\_$ss.py. The necessary explanations of the methods used are in the comments of the code. 
 For question (a), we do the following: \lstinputlisting[firstline=1,lastline=47]{solar_ss.py} 
 The resulting plot is in Fig. \ref{fig:fig1a}.
 
@@ -52,3 +52,67 @@ The resulting plot is in Fig. \ref{fig:fig1c}. The difference in the $x$ coordin
   \end{figure}
 
 \section{Calculating forces with the FFT}
+The exercise is done in the script fft.py. The necessary explanations of the methods used are in the comments of the code.
+For question (a), we do the following: \lstinputlisting[firstline=4,lastline=57]{fft.py}
+The resulting plot is in Fig. \ref{fig:fig2a}.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.9\linewidth]{./plots/fig2a.png}
+  \caption{Colormaps of the 2D slices of the grid at $z$ = 4.5, 9.5, 11.5 and 14.5, showing the $\delta$ assigned to each grid point.} 
+  \label{fig:fig2a}
+\end{figure}
+
+For question (b), the code is below: \lstinputlisting[firstline=59,lastline=213]{fft.py}
+The plot for the potential $\phi$ is in Fig. \ref{fig:fig2b}, while the log of the absolute value of the Fourier-transformed potential is in Fig. \ref{fig:fig2blog}.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.9\linewidth]{./plots/fig2b.png}
+  \caption{Colormap of the potential $\phi$ at $z$ = 4.5, 9.5, 11.5 and 14.5.} 
+  \label{fig:fig2b}
+\end{figure}
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.9\linewidth]{./plots/fig2b_pot.png}
+  \caption{Colormap of the log of the absolute value of the Fourier-transformed potential at $z$ = 4.5, 9.5, 11.5 and 14.5.} 
+  \label{fig:fig2blog}
+\end{figure}
+
+\section{Spiral and elliptical galaxies}
+The code for part (a) of this exercise is shown below: \lstinputlisting[firstline=5,lastline=54]{learning.py}
+The resulting plot is in Fig. \ref{fig:fig3a}.
+The output of the first 10 rescaled features is in: \lstinputlisting{3a.txt}
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.9\linewidth]{./plots/fig2b_pot.png}
+  \caption{Distributions of the rescaled features, having mean 0 and standard deviation 1.} 
+  \label{fig:fig3a}
+\end{figure}
+
+For part (b), the code follows: \lstinputlisting[firstline=56,lastline=221]{learning.py}
+The resulting plot is in Fig. \ref{fig:fig3b}.
+%comment
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.9\linewidth]{./plots/fig3b.png}
+  \caption{Evolution of the cost function convergence with the number of iterations, as result of the minimisation routine applied to the two sets of features.} 
+  \label{fig:fig3b}
+\end{figure}
+
+For part (c), we do the following: \lstinputlisting[firstline=223,lastline=280]{learning.py}
+The plot we obtained is in Fig. \ref{fig:fig3c}.
+The number of true/false positives/negatives, as well as the F1 score can be seen in: \lstinputlisting{3c.txt}
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.9\linewidth]{./plots/fig3c.png}
+  \caption{Scatter plots showing each pair of features against each other, with the decision boundary as result of the logistic regression.} 
+  \label{fig:fig3c}
+\end{figure}
+%comment
+
+

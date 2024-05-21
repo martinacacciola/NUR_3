@@ -8,9 +8,21 @@ if [ ! -d "plots" ]; then
   mkdir plots
 fi
 
-# Run satellite.py script
+# Download files from given links if they are not already present
+echo "Downloading files..."
+wget -nc https://home.strw.leidenuniv.nl/~daalen/Handin_files/galaxy_data.txt
+
+# Run script for first exercise
 echo "Run the Solar System script ..."
 python3 solar_ss.py
+
+# Run script for second exercise
+echo "Run the FFT script ..."
+python3 fft.py
+
+# Run script for third exercise
+echo "Run the Learning script ..."
+python3 learning.py
 
 echo "Generating the PDF"
 
