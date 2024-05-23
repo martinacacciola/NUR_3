@@ -236,7 +236,7 @@ plot_idx = [[0, 0], [0, 1], [1, 0], [1, 1], [2, 0], [2, 1]]
 combinations = list(itertools.combinations(range(4), 2))
 
 with open('3c.txt', 'w') as f:
-    f.write(f"{'Feature 1':<15}{'TP':<10}{'FP':<10}{'TN':<10}{'FN':<10}{'F1':<10}\n")
+    f.write(f"{'Feature 1':<15}{'Feature 2':<15}{'TP':<10}{'FP':<10}{'TN':<10}{'FN':<10}{'F1':<10}\n")
     for i, comb in enumerate(combinations):
         X = scaled_features[:, [0, comb[0] + 1, comb[1] + 1]]
         initial_theta = np.ones(X.shape[1])
@@ -248,7 +248,7 @@ with open('3c.txt', 'w') as f:
         tn = np.sum((y_pred == 0) & (labels == 0))
         fn = np.sum((y_pred == 0) & (labels == 1))
         f1_score = tp / (tp + 0.5 * (fp + fn))
-        f.write(f"{names[comb[0]]:<15}{tp:<10}{fp:<10}{tn:<10}{fn:<10}{f1_score:<10.2f}\n")
+        f.write(f"{names[comb[0]]:<15}{names[comb[1]]:<15}{tp:<10}{fp:<10}{tn:<10}{fn:<10}{f1_score:<10.2f}\n")
         ax[plot_idx[i][0], plot_idx[i][1]].scatter(scaled_features[:, comb[0] + 1], scaled_features[:, comb[1] + 1], c=labels)
         x_values = [np.min(scaled_features[:, comb[0] + 1]), np.max(scaled_features[:, comb[0] + 1])]
         y_values = [decision_boundary(x, theta_min) for x in x_values]
