@@ -50,6 +50,9 @@ with open('3a.txt', 'w') as f:
     for i in range(10):
         f.write(str(scaled_features[i]) + "\n")
 
+## b) 
+
+# From here, starts the minimization routine
 # Bracketing function
 def bracketing(f, a, b, n):
     '''
