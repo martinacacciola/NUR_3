@@ -54,7 +54,9 @@ with open('3a.txt', 'w') as f:
         f.write(str(scaled_features[i]) + "\n")
 
 ## b)
-        
+
+# From here, starts the minimization routine
+# Bracketing
 def bracketing(f, a, b, n):
     '''
     Inputs:
@@ -115,7 +117,7 @@ def bracketing(f, a, b, n):
     # Final bracket
     return a, b, c
 
-
+# Golden search
 def golden_search(f, a, b, tol=1e-7):
     
     golden_ratio = (1+np.sqrt(5)) / 2
@@ -165,22 +167,36 @@ def golden_search(f, a, b, tol=1e-7):
     # If the loop ends without returning, return b (= central value of the bracket) and the function value at b
     return b, f(b)
 
+# Logistic function
 def sigmoid(x):
+    '''
+    Input: 
+    - x: linear combination of the features and their corresponding weights
+    '''
     return 1 / (1 + np.exp(-x))
 
+# Cost function
 def cost_function(theta, X, y):
+    '''
+    Input:
+    - theta: weights
+    - X: features
+    - y: labels
+    '''
     m = len(y)
     h_theta = sigmoid(np.dot(X, theta))
     error = (y * np.log(h_theta)) + ((1-y)*np.log(1-h_theta))
     cost = -1/m * np.sum(error)
     return cost
 
+# Gradient of the cost function
 def gradient(theta, X, y):
     m = len(y)
     h_theta = sigmoid(np.dot(X, theta))
     grad = np.dot(X.T, (h_theta - y)) / m
     return grad
 
+# Perform logistic regression using the conjugate gradient method
 def logistic_regression_cg(X, y, theta, num_iters=150, tol=1e-7):
     cost_history = []
     d = -gradient(theta, X, y)
@@ -200,15 +216,19 @@ def logistic_regression_cg(X, y, theta, num_iters=150, tol=1e-7):
 
 scaled_features = np.array(scaled_features)
 
+# Add a column of ones to the features for the bias term
+scaled_features = np.hstack([np.ones((scaled_features.shape[0], 1)), scaled_features])
+
 # Features 1 and 2
-X_12 = scaled_features[:, :2]
-theta = np.zeros(X_12.shape[1])
-theta, cost_history_12 = logistic_regression_cg(X_12, labels, theta)
+X_12 = scaled_features[:, [0, 1, 2]]
+# Initialize theta with ones 
+initial_theta_12 = np.ones(X_12.shape[1])
+theta_12, cost_history_12 = logistic_regression_cg(X_12, labels, initial_theta_12)
 
 # Features 1 and 3
-X_13 = scaled_features[:, [0, 2]]
-theta = np.zeros(X_13.shape[1])
-theta, cost_history_13 = logistic_regression_cg(X_13, labels, theta)
+X_13 = scaled_features[:, [0, 1, 3]]
+initial_theta_13 = np.ones(X_13.shape[1])
+theta_13, cost_history_13 = logistic_regression_cg(X_13, labels, initial_theta_13)
 
 # Plotting
 fig, ax  = plt.subplots(1,1, figsize=(10,5), constrained_layout=True)
@@ -223,19 +243,22 @@ plt.close()
 ## c)
 
 # Define a function to calculate the decision boundary
+# It corresponds to the line where the probability of the class being 1 is 0.5
 def decision_boundary(x, theta):
-    return -theta[0]/theta[1] * x
+    return -(theta[0] + theta[1] * x) / theta[2]
 
 fig, ax = plt.subplots(3,2,figsize=(10,15))
 names = [r'$\kappa_{CO}$', 'Color', 'Extended', 'Emission line flux']
 plot_idx = [[0,0], [0,1], [1,0], [1,1], [2,0], [2,1]]
 
 with open('3c.txt', 'w') as f:
+    f.write(f"{'Features':<15}{'TP':<10}{'FP':<10}{'TN':<10}{'FN':<10}{'F1 Score':<10}\n")
+    f.write("="*65 + "\n")
     # Iterate over all combinations of features
     for i, comb in enumerate(itertools.combinations(np.arange(0,4), 2)):
-        # Select the features
-        X = scaled_features[:, comb]
-        theta = np.zeros(X.shape[1])
+        # Select the features (including the bias term)
+        X = scaled_features[:, [0] + [c + 1 for c in comb]]
+        theta = np.ones(X.shape[1])
         
         # Run logistic regression
         theta_min, _ = logistic_regression_cg(X, labels, theta)
@@ -254,13 +277,8 @@ with open('3c.txt', 'w') as f:
         recall = tp / (tp + fn)
         f1 = 2 * precision * recall / (precision + recall)
         
-        # Write the results to the file
-        f.write(f"Features: {comb}\n")
-        f.write(f"True Positives: {tp}\n")
-        f.write(f"False Positives: {fp}\n")
-        f.write(f"True Negatives: {tn}\n")
-        f.write(f"False Negatives: {fn}\n")
-        f.write(f"F1 Score: {f1}\n")
+        # Write the results to the file in a table format
+        f.write(f"{str(comb):<15}{tp:<10}{fp:<10}{tn:<10}{fn:<10}{f1:<10.4f}\n")
         
         # Plot the features and the decision boundary
         ax[plot_idx[i][0],plot_idx[i][1]].scatter(X[:, 0], X[:, 1], c=labels, cmap='viridis')

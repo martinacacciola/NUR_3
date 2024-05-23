@@ -13,7 +13,11 @@ The resulting plot is in Fig. \ref{fig:fig1a}.
 For question (b), 
 we do the following: \lstinputlisting[firstline=49,lastline=150]{solar_ss.py}
 The resulting plot is in Fig. \ref{fig:fig1b}, while a zoom on the inner planets is found at Fig. \ref{fig:fig1bzoom}.
-% aggiungi: Explain whether leapfrog is a suitable choice of an algorithm, and why.
+
+The leapfrog algorithm is a suitable choice for simulating the Solar System because of its symplectic nature, meaning that it conserves the geometric properties of the phase space exactly to machine precision $\epsilon_\text{m}$. 
+Hence it is very efficient in reducing the numerical energy drift, which makes it a stable integrator. 
+This is a key point in long-term integrations of Hamiltonian systems (e.g. planetary motion), where energy and angular momentum conservation are needed to ensure accurate and realistic simulations.
+Orbits are guaranteed to remain closed, with no divergence.
 
 \begin{figure}[h!]
     \centering
@@ -31,10 +35,15 @@ The resulting plot is in Fig. \ref{fig:fig1b}, while a zoom on the inner planets
     \label{fig:fig1bzoom}
   \end{figure}
 
-For question (c), 
-we do the following: \lstinputlisting[firstline=152,lastline=233]{solar_ss.py}
-%aggiungi: compare the results you get to those obtained with the leapfrog method
-The resulting plot is in Fig. \ref{fig:fig1c}. The difference in the $x$ coordinates computed by the two methods is found at Fig. \ref{fig:fig1cdiff}.
+For question (c), we do the following: \lstinputlisting[firstline=152,lastline=233]{solar_ss.py}
+The resulting plot of the orbits obtained is in Fig. \ref{fig:fig1c}, while the zoom on inner planets is in Fig. \ref{fig:fig1czoom}. The difference in the $x$ coordinates computed by the two methods is found at Fig. \ref{fig:fig1cdiff}.
+
+Runge-Kutta is one of best integrator choices, considering the trade-off between accuracy and force evaluations. 
+Its 4th-order accuracy (error of order $O(h^{4})$, where $h$ is the time step) allows for a cleaner representation of the orbits, compared to Leapfrog, as we can see in Fig. \ref{fig:fig1czoom}. 
+In particular, this is shown by the orbit of Mercury, which is the closer to the Sun and hence the most affected by the gravitational forces of the other planets. 
+Runge-Kutta is providing a more accurate representation of the orbit, as it is able to capture the small perturbations due to the other planets.
+The difference in accuracy is visible after a characteristic time, when the accumulated errors start to degrade the precision of the solutions.
+The maximum difference reached after 200 years of integration is of $\sim 3$ UA for Jupiter and Saturn. 
 
 \begin{figure}[h!]
     \centering
@@ -46,9 +55,17 @@ The resulting plot is in Fig. \ref{fig:fig1c}. The difference in the $x$ coordin
 
   \begin{figure}[h!]
     \centering
+    \includegraphics[width=0.9\linewidth]{./plots/fig1c_zoom.png}
+    \caption{Zoom showing the orbits of the inner planets in the Solar System, using Runge-Kutta method.
+    The positions of the objects are computed over a time of 200 years and are expressed in UA units. Right panel: $(x,y)$ positions over time. Left panel: $(z)$ coordinate over time.} 
+    \label{fig:fig1czoom}
+  \end{figure}
+
+  \begin{figure}[h!]
+    \centering
     \includegraphics[width=0.9\linewidth]{./plots/fig1c_diff.png}
-    \caption{Difference $(z)$ coordinate over time (100 years in this case, for clearer visualization) between the Leapfrog and Runge-Kutta methods.} 
-    \label{fig:fig1bzoom}
+    \caption{Difference in the $x$ coordinate over a time of 200 years between the Leapfrog and Runge-Kutta methods. Transparence is added to better distinguish the different planets' behaviour.} 
+    \label{fig:fig1bdiff}
   \end{figure}
 
 \section{Calculating forces with the FFT}
@@ -64,6 +81,9 @@ The resulting plot is in Fig. \ref{fig:fig2a}.
 \end{figure}
 
 For question (b), the code is below: \lstinputlisting[firstline=59,lastline=213]{fft.py}
+In our case, we are dealing with a original signal which is real, so when we take the inverse Fourier transform, we expect the resulting time-domain signal to be real.
+Anyway, we have to consider round-off errors, which can lead to small imaginary parts in the result. We checked and in our implementation they are of the order of $10^{-16}$, which is negligible.
+That is the reason why we need to take the real part of the inverse Fourier transform when doing the plot.
 The plot for the potential $\phi$ is in Fig. \ref{fig:fig2b}, while the log of the absolute value of the Fourier-transformed potential is in Fig. \ref{fig:fig2blog}.
 
 \begin{figure}[h!]
@@ -93,8 +113,12 @@ The output of the first 10 rescaled features is in: \lstinputlisting{3a.txt}
 \end{figure}
 
 For part (b), the code follows: \lstinputlisting[firstline=56,lastline=221]{learning.py}
-The resulting plot is in Fig. \ref{fig:fig3b}.
-%comment
+The resulting plot of the cost function evolving with the number of iterations is in Fig. \ref{fig:fig3b}. In this case, we have chosen two sets of features: $\kappa_\text{CO}$ (Feature 1) coupled respectively with the color estimation (Feature 2), and the measure of the extension of each galaxy (Feature 3).
+The cost function converges faster and to lower values when using the first set of features. 
+This suggests that this pair of features is more relevant to predicting the target variable (in this case, the morphology flag) than the second set of features. 
+They might have stronger discriminative power, providing clearer distinctions between the two classes 0 and 1. 
+Moreover, they might be less correlated with each other, giving unique information about the target variable and hence more valuable for the model.
+This leads to faster learning and better performance of the logistic regression model, as the cost function is minimized more efficiently. 
 
 \begin{figure}[h!]
   \centering
@@ -106,6 +130,12 @@ The resulting plot is in Fig. \ref{fig:fig3b}.
 For part (c), we do the following: \lstinputlisting[firstline=223,lastline=280]{learning.py}
 The plot we obtained is in Fig. \ref{fig:fig3c}.
 The number of true/false positives/negatives, as well as the F1 score can be seen in: \lstinputlisting{3c.txt}
+These results confirm the previous analysis, showing that the first set of features is more relevant for the classification task. When we couple $\kappa_\text{CO}$  with the color estimation, the model is able to better distinguish between the two classes, as shown by the higher F1 score.
+A high F1 score indicates that the model has both high precision and high recall. In this case, the model's predictions are accurate (few false positives) and it effectively captures most of the positive instances in the dataset (few false negatives). 
+Overall, the model is performing well, reaching on average a F1 score of 0.8. However, in the last case, when coupling the measure of the extension of each galaxy with the flux of the emission line, 
+the F1 score is significantly lower, indicating that the model is less accurate in predicting the target variable. This suggests that the features might be irrelevant or contain noise, which can diminuish the model's ability to learn meaningful patterns from the data.
+It might also happen that the relationship between the features and the target variable is complex or nonlinear. If the model cannot capture these interactions effectively, it may lead to poor performance and a low F1 score. 
+In such a case, a more sophisticated model may be necessary to address the problem.
 
 \begin{figure}[h!]
   \centering

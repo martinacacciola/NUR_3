@@ -61,11 +61,15 @@ plt.close()
 # FFT using Cooley-Tukey algorithm (recursively)
 def fft_recursive(x):
     N = len(x)
+    # If the array is of length 1, return the input
     if N <= 1:
         return x
+    # Call the DFT routine recursively on all even and odd elements
+    # Store the output respectively on the first and second half of the array (corresponding to bit reversal)
     even = fft_recursive(x[0::2])
     odd = fft_recursive(x[1::2])
     T = [np.exp(-2j * np.pi * k / N) * odd[k] for k in range(N // 2)]
+    # Combine results of the even and odd parts
     return [even[k] + T[k] for k in range(N // 2)] + [even[k] - T[k] for k in range(N // 2)]
 
 # Inverse FFT using Cooley-Tukey algorithm (recursively)
@@ -76,13 +80,18 @@ def ifft_recursive(x):
     even = ifft_recursive(x[0::2])
     odd = ifft_recursive(x[1::2])
     T = [np.exp(2j * np.pi * k / N) * odd[k] for k in range(N // 2)]
+    # Combine results of the even and odd parts and divide by 2 to account for the normalization factor
+    # This ensures that the energy of the signal is preserved during the transformation 
+    # from the frequency domain back to the time domain
     return [(even[k] + T[k]) / 2 for k in range(N // 2)] + [(even[k] - T[k]) / 2 for k in range(N // 2)]
 
 def fft3d(data):
     n = data.shape[0]
+    # Convert the input element to complex type
     fft_data = np.zeros_like(data, dtype=complex)
 
     # Apply FFT to each dimension
+    # Series of 1D FFTs over rows, then over columns
     for i in range(n):
         for j in range(n):
             fft_data[i, j, :] = fft_recursive(data[i, j, :])
@@ -96,9 +105,11 @@ def fft3d(data):
 
 def ifft3d(data):
     n = data.shape[0]
+    # Convert the input element to complex type
     ifft_data = np.zeros_like(data, dtype=complex)
 
     # Apply inverse FFT to each dimension
+    # Series of 1D FFTs over rows, then over columns
     for i in range(n):
         for j in range(n):
             ifft_data[i, j, :] = ifft_recursive(data[i, j, :])
@@ -111,38 +122,71 @@ def ifft3d(data):
     return ifft_data
 
 def fftfreq(n):
-    """Returns the Discrete Fourier Transform sample frequencies."""
+    """
+    Calculates the Discrete Fourier Transform sample frequencies of a signal
+    Input:
+    - n: Number of data points in the input signal
+
+    Returns:
+    - results: Array of sample frequencies.
+    """
+
+    # Step size between frequencies
     val = 1.0 / n
+    # Array to store the frequencies
     results = np.zeros(n)
+    # Number of positive frequencies (including zero frequency)
     N = (n - 1) // 2 + 1
+    # Generate positive frequencies
     p1 = np.arange(0, N, dtype=int)
     results[:N] = p1
+    # Generate negative frequencies
     p2 = np.arange(-(n//2), 0, dtype=int)
     results[N:] = p2
+    # Multiply frequencies by the step size to get the actual frequency values
     return results * val
 
 def fftshift(x):
     """
     Shift the zero-frequency component to the center of the spectrum.
-    This is for visualization purposes, since it is easier to interpret low and high frequencies
-    centered around zero.
     """
     n = len(x)
+    # Split the input array into two parts: right half (from index n//2 to end) and left half (from index 0 to n//2)
     p2 = x[n//2:]
     p1 = x[:n//2]
+    # Concatenate the two parts to shift the zero-frequency component to the center
     return np.concatenate((p2, p1))
 
-# Create the k-grid
 def create_k_grid(n):
+    """
+    Create a  3D grid of wave numbers (k) for Fourier space representation
+    Input:
+    - n: Size of the grid in each dimension.
+
+    Returns:
+    - k: 3D array representing the wave numbers.
+    """
+
+    # Initialize a 3D array to store wave numbers
     k = np.zeros((n, n, n))
+
+    # Iterate over each point in the grid
     for i in range(n):
         for j in range(n):
             for l in range(n):
+                # Calculate the wave number components for each dimension
+                # Apply periodic boundary conditions if the index exceeds the Nyquist frequency
+                # ensuring that the wave numbers wrap around appropriately within the grid
                 kx = (i - n if i > n // 2 else i) * 2 * np.pi / n
                 ky = (j - n if j > n // 2 else j) * 2 * np.pi / n
                 kz = (l - n if l > n // 2 else l) * 2 * np.pi / n
+
+                # Compute the magnitude of the wave number vector
                 k[i, j, l] = kx**2 + ky**2 + kz**2
-    k[0, 0, 0] = 1  # To avoid division by zero
+
+    # Set the value at the origin to avoid division by zero
+    k[0, 0, 0] = 1  
+
     return k
 
 # Perform FFT on delta
@@ -154,30 +198,10 @@ k_squared = create_k_grid(n_mesh)
 
 phi_k = delta_k / k_squared
 
-# Manually compute the real part of the inverse FFT
-def ifft_real(data):
-    n = data.shape[0]
-    real_data = np.zeros_like(data, dtype=float)
-    for x in range(n):
-        for y in range(n):
-            for z in range(n):
-                sum_val = 0
-                for kx in range(n):
-                    for ky in range(n):
-                        for kz in range(n):
-                            angle = 2 * np.pi * ((kx * x / n) + (ky * y / n) + (kz * z / n))
-                            complex_val = data[kx, ky, kz] * np.exp(1j * angle)
-                            # Use symmetry property of FFT of real-valued signal
-                            if kx <= n//2 and ky <= n//2 and kz <= n//2:
-                                sum_val += complex_val
-                            else:
-                                sum_val += complex_val  # This is actually the complex conjugate
-                real_data[x, y, z] = sum_val / (n**3)
-    return real_data
-
-
 # Perform inverse FFT to get phi in real space
-phi = ifft_real(phi_k)
+# Taking the real part is necessary in this case because of the mixing between real and imaginary components due to round-off error
+# In this way, we get rid of the small imaginary part to allow the visualization of the potential
+phi = np.real(ifft3d(phi_k))
 
 # Plot the 2D slices of phi
 fig, axes = plt.subplots(2, 2, figsize=(12, 10))

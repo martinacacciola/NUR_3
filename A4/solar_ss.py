@@ -89,20 +89,18 @@ positions_history_lf = {planet: np.zeros((time_steps, 3)) for planet in planets}
 
 # Run leapfrog integration
 for step in range(time_steps):
-    # Update velocities (v_i+1/2)
+    
     for planet in m_planet:
+        # Relative position vector between each planet and the Sun
         r = positions[planet] - positions['sun']
+        # Update velocity to the midpoint (v_i+1/2) using the acceleration at the current position
         velocities[planet] += acceleration(r) * (dt / 2)
-
-    # Update positions (x_i+1)
-    for planet in m_planet:
+        # Update positions (x_i+1) using the midpoint velocity
         positions[planet] += velocities[planet] * dt
-
-    # Convert positions to AU for storage
-    for planet in planets:
+        # Store current position in AU
         positions_history_lf[planet][step] = positions[planet] / u.au.to(u.m)
 
-    # Update velocities again (v_i+1)
+    # Update velocities again (v_i+1) using the new position
     for planet in m_planet:
         r = positions[planet] - positions['sun']
         velocities[planet] += acceleration(r) * (dt / 2)
@@ -153,15 +151,17 @@ plt.close()
 
 # Runge-Kutta integration function
 def runge_kutta_step(r, v, dt):
+    # Initial velocity and position
     k1v = acceleration(r)
     k1r = v
+    # Update velocity and position by weighted combination of slopes
     k2v = acceleration(r + k1r * (dt / 2))
     k2r = v + k1v * (dt / 2)
     k3v = acceleration(r + k2r * (dt / 2))
     k3r = v + k2v * (dt / 2)
     k4v = acceleration(r + k3r * dt)
     k4r = v + k3v * dt
-
+    # Return new position and velocity
     v_new = v + (1 / 6) * (k1v + 2*k2v + 2*k3v + k4v) * dt
     r_new = r + (1 / 6) * (k1r + 2*k2r + 2*k3r + k4r) * dt
 
@@ -185,9 +185,7 @@ for step in range(time_steps):
     # Update positions and velocities for all planets
     for planet in m_planet:
         positions[planet], velocities[planet] = runge_kutta_step(positions[planet], velocities[planet], dt)
-
-    # Convert positions to AU for storage
-    for planet in planets:
+        # Store current position in AU
         positions_history_rk[planet][step] = positions[planet] / u.au.to(u.m)
 
 # Extract x, y, z coordinates for all planets in AU
@@ -217,21 +215,36 @@ plt.legend(loc='upper left', bbox_to_anchor=(1.05, 1))
 plt.savefig("./plots/fig1c.png")
 plt.close()
 
+# Zoom on the inner planets
+fig, ax = plt.subplots(1, 2, figsize=(12, 5), constrained_layout=True)
+inner_planets = ['sun', 'mercury', 'venus', 'earth', 'mars']
+for i, planet in enumerate(inner_planets):
+    ax[0].plot(x_rk[i], y_rk[i], label=planet)
+    ax[1].plot(time, z_rk[i], label=planet)
+
+ax[0].set_aspect('equal', 'box')
+ax[0].set(xlabel='X [AU]', ylabel='Y [AU]')
+ax[1].set(xlabel='Time [yr]', ylabel='Z [AU]')
+ax[1].set_xlim(0,5)
+plt.legend(loc='upper left', bbox_to_anchor=(1.05, 1))
+plt.savefig("fig1c_zoom.png")
+plt.close()
+
 # Calculate difference in x positions between leapfrog and Runge-Kutta methods
-x_diff = np.array(x_leapfrog) - np.array(x_rk)
+# This can be done since the starting positions for both methods are the same
+x_diff = np.abs(np.array(x_leapfrog) - np.array(x_rk))
 
 # Create a plot of the difference in x positions versus time
 plt.figure(figsize=(8, 6))
 for i, planet in enumerate(m_planet):
-    plt.plot(time, x_diff[i], label=planet)
-
+    plt.plot(time, x_diff[i], label=planet, alpha=0.5) 
+    
 plt.xlabel('Time [yr]')
 plt.ylabel('Difference in X Position [AU]')
-plt.xlim(0,100)
 plt.title('Difference in X Position Between Leapfrog and Runge-Kutta')
 plt.legend()
-plt.savefig("./plots/fig1c_diff.png")
-plt.close()
+plt.savefig("fig1c_diff.png")
+plt.show()
 
 
 
