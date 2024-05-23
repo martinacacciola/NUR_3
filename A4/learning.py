@@ -175,29 +175,38 @@ def gradient(theta, X, y):
 def logistic_regression_cg(X, y, theta, num_iters=150, tol=1e-7):
     '''
     Input:
-    - X: features
-    - y: labels
-    - theta: initial weights
-    - num_iters: number of iterations
-    - tol: tolerance for stopping criterion
+    - X: features 
+    - y: labels 
+    - theta: initial weights 
+    - num_iters: number of iterations for the conjugate gradient method
+    - tol: tolerance 
+
     Output:
     - theta: optimized weights
-    - cost_history: history of cost function values
+    - cost_history: history of cost function values 
     '''
-    cost_history = []
-    d = -gradient(theta, X, y)
-    for _ in range(num_iters):
-        old_cost = cost_function(theta, X, y)
+    cost_history = [] 
+    # Compute the initial gradient direction
+    d = -gradient(theta, X, y) 
+    
+    for _ in range(num_iters): 
+        # Calculate the current cost
+        old_cost = cost_function(theta, X, y) 
+        # Perform line minimization to find the optimal step size alpha
         alpha = golden_search(lambda a: cost_function(theta + a * d, X, y), 0, 1)[0]
-        theta += alpha * d
-        new_grad = gradient(theta, X, y)
+        theta += alpha * d  # Update the weights using the computed step size
+        new_grad = gradient(theta, X, y)  # Compute the new gradient
+        # Compute the beta parameter for the conjugate gradient method
         beta = np.dot(new_grad.T, new_grad) / np.dot(d.T, d)
-        d = -new_grad + beta * d
-        new_cost = cost_function(theta, X, y)
-        cost_history.append(new_cost)
+        d = -new_grad + beta * d  # Update the search direction
+        new_cost = cost_function(theta, X, y)  
+        cost_history.append(new_cost)  
+
+        # Check if the change in cost is below the tolerance threshold
         if abs(new_cost - old_cost) < tol:
-            break
-    return theta, cost_history
+            break  
+
+    return theta, cost_history 
 
 # Features 1 and 2
 X_12 = scaled_features[:, [0, 1, 2]]
