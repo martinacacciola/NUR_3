@@ -93,14 +93,14 @@ for step in range(time_steps):
     for planet in m_planet:
         # Relative position vector between each planet and the Sun
         r = positions[planet] - positions['sun']
-        # Update velocity to the midpoint (v_i+1/2) using the acceleration at the current position
+        # Update velocity to the midpoint using the acceleration at the current position
         velocities[planet] += acceleration(r) * (dt / 2)
-        # Update positions (x_i+1) using the midpoint velocity
+        # Update positions using the midpoint velocity
         positions[planet] += velocities[planet] * dt
         # Store current position in AU
         positions_history_lf[planet][step] = positions[planet] / u.au.to(u.m)
 
-    # Update velocities again (v_i+1) using the new position
+    # Update velocities again using the new position
     for planet in m_planet:
         r = positions[planet] - positions['sun']
         velocities[planet] += acceleration(r) * (dt / 2)
@@ -244,7 +244,7 @@ plt.ylabel('Difference in X Position [AU]')
 plt.title('Difference in X Position Between Leapfrog and Runge-Kutta')
 plt.legend()
 plt.savefig("fig1c_diff.png")
-plt.show()
+plt.close()
 
 
 
