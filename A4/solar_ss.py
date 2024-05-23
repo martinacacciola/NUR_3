@@ -93,7 +93,7 @@ for step in range(time_steps):
     for planet in m_planet:
         # Relative position vector between each planet and the Sun
         r = positions[planet] - positions['sun']
-        # Update velocity to the midpoint using the acceleration at the current position
+        #Update velocity to the midpoint using the acceleration at the current position
         velocities[planet] += acceleration(r) * (dt / 2)
         # Update positions using the midpoint velocity
         positions[planet] += velocities[planet] * dt
@@ -151,10 +151,10 @@ plt.close()
 
 # Runge-Kutta integration function
 def runge_kutta_step(r, v, dt):
-    # Initial velocity and position
+    #Initial velocity and position
     k1v = acceleration(r)
     k1r = v
-    # Update velocity and position by weighted combination of slopes
+    #Update velocity and position by weighted combination of slopes
     k2v = acceleration(r + k1r * (dt / 2))
     k2r = v + k1v * (dt / 2)
     k3v = acceleration(r + k2r * (dt / 2))
